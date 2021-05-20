@@ -182,11 +182,10 @@ def addCountry(analyzer, country):
                      'country_code': country['CountryCode'],
                      'capital_lat': country['CapitalLatitude'],
                      'capital_long': country['CapitalLongitude'],
-                     'contry_code': country['CountryCode'],
                      'continent_name': country['ContinentName'],
                      'population': int(country['Population'].replace('.','')),
                      'internet_users': int(country['Internet users'].replace('.',''))}
-        m.put(analyzer['paths'], country_name, new_entry)
+        m.put(analyzer['countries'], country_name, new_entry)
     return analyzer
 
 
