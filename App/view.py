@@ -37,7 +37,13 @@ operación solicitada
 def printMenu():
     print("Bienvenido")
     print("1- Cargar información en el catálogo")
-    print("2- ")
+    print("2- Encontrar componentes conectados y pertenencias")
+    print("3- Encontrar landing points mas conectados")
+    print("4- Encontrar ruta minima entre dos paises")
+    print("5- Identificar red de expansion minima")
+    print("6- Simular fallo de landing point")
+    print("7- Calcular el ancho de banda maximo")
+    print("8- Calcular la ruta minima para enviar informacion entre dos IPs")
 
 catalog = None
 
