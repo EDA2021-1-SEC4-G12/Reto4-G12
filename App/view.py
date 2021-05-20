@@ -55,6 +55,12 @@ while True:
     inputs = input('Seleccione una opción para continuar\n')
     if int(inputs[0]) == 1:
         print("Cargando información de los archivos ....")
+        cont = controller.init()
+        controller.loadData(cont)
+        numedges = controller.totalConnections(cont)
+        numvertex = controller.totalEdges(cont)
+        print('Numero de vertices: ' + str(numvertex))
+        print('Numero de arcos: ' + str(numedges))
 
     elif int(inputs[0]) == 2:
         pass
