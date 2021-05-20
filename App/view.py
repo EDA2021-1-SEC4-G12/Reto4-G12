@@ -44,6 +44,7 @@ def printMenu():
     print("6- Simular fallo de landing point")
     print("7- Calcular el ancho de banda maximo")
     print("8- Calcular la ruta minima para enviar informacion entre dos IPs")
+    print("9- Salir")
 
 catalog = None
 
