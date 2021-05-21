@@ -260,7 +260,7 @@ def formatLength(length):
     seguido de la ruta.
     """
     if length == 'n.a.':
-        lenght = 0
+        lenght = 0.1
     else:
         lenght = length.split(' ')
         lenght = float(lenght[0].replace(',',''))
