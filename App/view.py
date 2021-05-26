@@ -42,8 +42,8 @@ def printMenu():
     print("4- Encontrar ruta minima entre dos paises")
     print("5- Identificar red de expansion minima")
     print("6- Simular fallo de landing point")
-    print("7- Calcular el ancho de banda maximo")
-    print("8- Calcular la ruta minima para enviar informacion entre dos IPs")
+    print("7- Calcular el ancho de banda maximo (bono)")
+    print("8- Calcular la ruta minima para enviar informacion entre dos IPs (bono)")
     print("9- Salir")
 
 catalog = None
@@ -102,13 +102,13 @@ while True:
             print(info_out[path_['vertexA']]['name'],'-->',info_out[path_['vertexB']]['name'],'dist [km]:', path_['weight'])
         print('Total distance [km] :', total_dist)
 
-    elif int(inputs[0]) == 5:
+    elif int(inputs[0]) == 6:
         print('\nDefinir landing point para simular fallo...')
         lp = input('Nombre del landing point (ciudad): ')
         adj_edges, sort_dist, info_out = controller.LandingPointNN(cont, lp)
         print('\nNumero de paises afectados :',len(sort_dist))
         for i, country_ in enumerate(sort_dist):
-            print(i+1,'--',info_out[country_[0]]['name'].split(','),
+            print(i+1,'--',info_out[country_[0]]['name'],
                 '| dist [km]: ', country_[1])
     
 
