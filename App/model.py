@@ -106,6 +106,7 @@ def addConnections(analyzer, connection):
         origin = int(connection['\ufefforigin'])
         destination = int(connection['destination'])
         lenght = connection['cable_length']
+        # if lenght != 'n.a.':
         lenght = formatLength(lenght)
         addNode(analyzer, origin)
         addNode(analyzer, destination)
@@ -313,6 +314,23 @@ def minDistanceBetweenCapitals(analyzer, countryA, countryB):
             info_out[lp[vertex]] = {'name':lp_info['name']}
 
     return min_path, total_dist, info_out
+
+
+def LandingPointNN(analyzer, lp_name):
+    '''
+    Calcula los landing points vecinos
+    '''
+    lp = formatVertex(analyzer, lp_name)
+    adj_edges = gr.adjacentEdges(analyzer['connections'], lp)
+
+    info_out = {}   # save info of each max landing point
+    vert_dist = {}
+    for edge_ in lt.iterator(adj_edges):
+        lp_info = m.get(analyzer['landing_points'],edge_['vertexB'])['value']
+        info_out[edge_['vertexB']] = {'name':lp_info['name'],'dist':edge_['weight']}
+        vert_dist[edge_['vertexB']] = edge_['weight']
+    sort_dist = sorted(vert_dist.items(), key=lambda x:x[1], reverse=True)
+    return adj_edges, sort_dist, info_out
 
 
 def totalEdges(analyzer):

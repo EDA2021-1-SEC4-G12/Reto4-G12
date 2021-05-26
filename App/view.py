@@ -102,6 +102,16 @@ while True:
             print(info_out[path_['vertexA']]['name'],'-->',info_out[path_['vertexB']]['name'],'dist [km]:', path_['weight'])
         print('Total distance [km] :', total_dist)
 
+    elif int(inputs[0]) == 5:
+        print('\nDefinir landing point para simular fallo...')
+        lp = input('Nombre del landing point (ciudad): ')
+        adj_edges, sort_dist, info_out = controller.LandingPointNN(cont, lp)
+        print('\nNumero de paises afectados :',len(sort_dist))
+        for i, country_ in enumerate(sort_dist):
+            print(i+1,'--',info_out[country_[0]]['name'].split(','),
+                '| dist [km]: ', country_[1])
+    
+
     else:
         sys.exit(0)
 sys.exit(0)
@@ -136,13 +146,22 @@ print('n-Country Info: ', lastcountry['country'], ' -- ',
 # maxdeg, mostconnected, _ =  controller.mostConnectedLandingPoint(cont)
 
 # Input 4
-print('\nDefinir paises para calcular la ruta minima...')
-countryA = input('Pais A: ')
-countryB = input('Pais B: ')
-min_path, total_dist, info_out = controller.minDistanceBetweenCapitals(cont, countryA, countryB)
-print('\nRuta minima entre',countryA,'y',countryB)
-for path_ in lt.iterator(min_path):
-    print(info_out[path_['vertexA']]['name'],'-->',info_out[path_['vertexB']]['name'],'dist [km]:', path_['weight'])
-print('Total distance [km] :', total_dist)
+# print('\nDefinir paises para calcular la ruta minima...')
+# countryA = input('Pais A: ')
+# countryB = input('Pais B: ')
+# min_path, total_dist, info_out = controller.minDistanceBetweenCapitals(cont, countryA, countryB)
+# print('\nRuta minima entre',countryA,'y',countryB)
+# for path_ in lt.iterator(min_path):
+#     print(info_out[path_['vertexA']]['name'],'-->',info_out[path_['vertexB']]['name'],'dist [km]:', path_['weight'])
+# print('Total distance [km] :', total_dist)
+
+# Input 5
+# lp = input('\nNombre del landing point (ciudad): ')
+# adj_edges, sort_dist, info_out = controller.LandingPointNN(cont, lp)
+# print('\nNumero de paises afectados :',len(sort_dist))
+# for i, country_ in enumerate(sort_dist):
+#     print(i+1,'--',info_out[country_[0]]['name'].split(','),
+#           '| dist [km]: ', country_[1])
+    
 
 print('done')

@@ -95,6 +95,14 @@ def minDistanceBetweenCapitals(analyzer, countryA, countryB):
     min_path, total_dist, info_out = model.minDistanceBetweenCapitals(analyzer, countryA, countryB)
     return min_path, total_dist, info_out
 
+
+def LandingPointNN(analyzer, lp_name):
+    '''
+    Calcula los landing points vecinos
+    '''
+    adj_edges, sort_dist, info_out = model.LandingPointNN(analyzer, lp_name)
+    return adj_edges, sort_dist, info_out
+
 def totalEdges(analyzer):
     """
     Total de paradas de autobus
