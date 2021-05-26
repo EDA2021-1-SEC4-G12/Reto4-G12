@@ -25,6 +25,7 @@
  """
 
 
+from sys import int_info
 import config as cf
 from DISClib.ADT.graph import gr
 from DISClib.ADT import list as lt
@@ -261,6 +262,34 @@ def NumberConnectedComponents(analyzer):
     """
     analyzer['components'] = scc.KosarajuSCC(analyzer['connections'])
     return scc.connectedComponents(analyzer['components'])
+
+
+def mostConnectedLandingPoint(analyzer):
+    '''
+    Calcula los landing points mas conectados
+    '''
+    landing_points = gr.vertices(analyzer['connections'])
+    lp_degs = {}    # organize in dict
+    for lp in lt.iterator(landing_points):
+        deg_ = gr.degree(analyzer['connections'],lp)
+        try:
+            lp_degs[deg_].append(lp)
+        except Exception as exp:
+            lp_degs[deg_] = list()
+            lp_degs[deg_].append(lp)
+    degs_list = (lp_degs.keys())
+    max_deg = max(degs_list)    # get max degree
+    max_lps = lp_degs[max_deg]
+
+    info_out = {}   # save info of each max landing point
+    for lp in max_lps:
+        lp_info = m.get(analyzer['landing_points'],lp)['value']
+        info_out[lp] = {'name':lp_info['name'],
+                        'deg':max_deg}
+
+    return max_deg, max_lps, info_out
+    
+
 
 def totalEdges(analyzer):
     """

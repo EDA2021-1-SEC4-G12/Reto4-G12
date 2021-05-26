@@ -84,34 +84,44 @@ while True:
         else:
             print(lp1,'y',lp2,'NO pertenecen al mismo cluster.')
 
-        pass
+    elif int(inputs[0]) == 3:
+        maxdeg, mostconnected, info_out =  controller.mostConnectedLandingPoint(cont)
+        print('\nLanding point(s) mas conectado(s)')
+        for i, mostconn_ in enumerate(mostconnected):
+            print(i+1,'--', 'landing point id :', mostconn_,
+                  '| nombre :', info_out[mostconn_]['name'],
+                  '| conexiones :', maxdeg)
 
     else:
         sys.exit(0)
 sys.exit(0)
 
-# #------------- debbug --------------------------
-# # Input 1
-# print("Cargando información de los archivos ....")
-# cont = controller.init()
-# controller.loadData(cont)
-# numedges = controller.totalConnections(cont)
-# numvertex = controller.totalEdges(cont)
-# numcountries = controller.totalCountries(cont)
-# firstlp = controller.getFirstLandingPointInfo(cont)
-# lastcountry = controller.getLastCountryInfo(cont)
-# print('Numero de landing points (vertices): ' + str(numvertex))
-# print('Numero de conexiones (arcos): ' + str(numedges))
-# print('Numero de paises : ' + str(numcountries))
-# print('1st Landing point id: ', firstlp['id'],
-#         '| nombre :', firstlp['name'],
-#         '| cords :' , 'Lat. {} Long. {}'.format(firstlp['lat'],firstlp['long']))
-# print('n-Country Info: ', lastcountry['country'], ' -- ',
-#         'poblacion :', str(lastcountry['population']),
-#         '| usuarios :', str(lastcountry['internet_users']))
+#------------- debbug --------------------------
+# Input 1
+print("Cargando información de los archivos ....")
+cont = controller.init()
+controller.loadData(cont)
+numedges = controller.totalConnections(cont)
+numvertex = controller.totalEdges(cont)
+numcountries = controller.totalCountries(cont)
+firstlp = controller.getFirstLandingPointInfo(cont)
+lastcountry = controller.getLastCountryInfo(cont)
+print('Numero de landing points (vertices): ' + str(numvertex))
+print('Numero de conexiones (arcos): ' + str(numedges))
+print('Numero de paises : ' + str(numcountries))
+print('1st Landing point id: ', firstlp['id'],
+        '| nombre :', firstlp['name'],
+        '| cords :' , 'Lat. {} Long. {}'.format(firstlp['lat'],firstlp['long']))
+print('n-Country Info: ', lastcountry['country'], ' -- ',
+        'poblacion :', str(lastcountry['population']),
+        '| usuarios :', str(lastcountry['internet_users']))
 
-# # Input 2
+# Input 2
 # print('Definir landings points a analizar...')
 # lp1 = input('Landing point 1: ')
 # lp2 = input('Landing point 2: ')
 # out = controller.VertexInComponents(cont, lp1, lp2)
+
+# Input 3
+maxdeg, mostconnected, _ =  controller.mostConnectedLandingPoint(cont)
+print('done')

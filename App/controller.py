@@ -80,6 +80,14 @@ def VertexInComponents(analyzer, vertex1, vertex2):
     return n_components, same_comp
 
 
+def mostConnectedLandingPoint(analyzer):
+    '''
+    Calcula los landing points mas conectados
+    '''
+    max_deg, max_lps, info_out = model.mostConnectedLandingPoint(analyzer)
+    return max_deg, max_lps, info_out
+
+
 def totalEdges(analyzer):
     """
     Total de paradas de autobus
