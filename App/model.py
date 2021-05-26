@@ -305,7 +305,7 @@ def minDistanceBetweenCapitals(analyzer, countryA, countryB):
     analyzer['min_dists_paths'] = djk.Dijkstra(analyzer['connections'], lpA)
     min_path = djk.pathTo(analyzer['min_dists_paths'], lpB)
     
-    info_out = {}   # save info of each max landing point
+    info_out = {}   # save info of each landing point
     total_dist = 0
     for lp in lt.iterator(min_path):
         total_dist += lp['weight']
@@ -323,7 +323,7 @@ def LandingPointNN(analyzer, lp_name):
     lp = formatVertex(analyzer, lp_name)
     adj_edges = gr.adjacentEdges(analyzer['connections'], lp)
 
-    info_out = {}   # save info of each max landing point
+    info_out = {}   # save info of each landing point
     vert_dist = {}
     for edge_ in lt.iterator(adj_edges):
         lp_info = m.get(analyzer['landing_points'],edge_['vertexB'])['value']
@@ -333,7 +333,7 @@ def LandingPointNN(analyzer, lp_name):
     return adj_edges, sort_dist, info_out
 
 
-def totalEdges(analyzer):
+def totalLPs(analyzer):
     """
     Retorna el total de estaciones (vertices) del grafo
     """
