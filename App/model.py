@@ -25,6 +25,7 @@
  """
 
 
+from os import name
 from sys import int_info
 import config as cf
 from DISClib.ADT.graph import gr
@@ -290,6 +291,29 @@ def mostConnectedLandingPoint(analyzer):
     return max_deg, max_lps, info_out
     
 
+def minDistanceBetweenCapitals(analyzer, countryA, countryB):
+    '''
+    Calcula la distancia minima entre las capitales de dos paises dados
+    '''
+    capitalA = getCapital(analyzer, countryA)
+    capitalB = getCapital(analyzer, countryB)
+    nameA = '{}, {}'.format(capitalA, countryA)
+    nameB = '{}, {}'.format(capitalB, countryB)
+    lpA = formatVertex(analyzer, capitalA)
+    lpB = formatVertex(analyzer, capitalB)
+    analyzer['min_dists_paths'] = djk.Dijkstra(analyzer['connections'], lpA)
+    min_path = djk.pathTo(analyzer['min_dists_paths'], lpB)
+    
+    info_out = {}   # save info of each max landing point
+    total_dist = 0
+    for lp in lt.iterator(min_path):
+        total_dist += lp['weight']
+        for vertex in ['vertexA','vertexB']:
+            lp_info = m.get(analyzer['landing_points'],lp[vertex])['value']
+            info_out[lp[vertex]] = {'name':lp_info['name']}
+
+    return min_path, total_dist, info_out
+
 
 def totalEdges(analyzer):
     """
@@ -376,6 +400,18 @@ def formatVertex(analyzer, vertex_name):
         return vertex['landing_point_id']
     else:
         print('Landing point ', vertex_name, ' not found...')
+
+
+def getCapital(analyzer, country_name):
+    '''
+    Retorna capital de un capital de un pais dado
+    '''
+    country_info = m.get(analyzer['countries'],country_name)
+    if country_info:
+        return country_info['value']['capital_name']
+    else:
+        print('Country ', country_name, ' not found...')
+
 
 def compareroutes(route1, route2):
     """

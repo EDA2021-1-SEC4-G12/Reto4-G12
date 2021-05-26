@@ -88,6 +88,13 @@ def mostConnectedLandingPoint(analyzer):
     return max_deg, max_lps, info_out
 
 
+def minDistanceBetweenCapitals(analyzer, countryA, countryB):
+    '''
+    Calcula la distancia minima entre las capitales de dos paises dados
+    '''
+    min_path, total_dist, info_out = model.minDistanceBetweenCapitals(analyzer, countryA, countryB)
+    return min_path, total_dist, info_out
+
 def totalEdges(analyzer):
     """
     Total de paradas de autobus

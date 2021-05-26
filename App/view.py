@@ -92,6 +92,16 @@ while True:
                   '| nombre :', info_out[mostconn_]['name'],
                   '| conexiones :', maxdeg)
 
+    elif int(inputs[0]) == 4:
+        print('\nDefinir paises para calcular la ruta minima...')
+        countryA = input('Pais A: ')
+        countryB = input('Pais B: ')
+        min_path, total_dist, info_out = controller.minDistanceBetweenCapitals(cont, countryA, countryB)
+        print('\nRuta minima entre',countryA,'y',countryB)
+        for path_ in lt.iterator(min_path):
+            print(info_out[path_['vertexA']]['name'],'-->',info_out[path_['vertexB']]['name'],'dist [km]:', path_['weight'])
+        print('Total distance [km] :', total_dist)
+
     else:
         sys.exit(0)
 sys.exit(0)
@@ -123,5 +133,16 @@ print('n-Country Info: ', lastcountry['country'], ' -- ',
 # out = controller.VertexInComponents(cont, lp1, lp2)
 
 # Input 3
-maxdeg, mostconnected, _ =  controller.mostConnectedLandingPoint(cont)
+# maxdeg, mostconnected, _ =  controller.mostConnectedLandingPoint(cont)
+
+# Input 4
+print('\nDefinir paises para calcular la ruta minima...')
+countryA = input('Pais A: ')
+countryB = input('Pais B: ')
+min_path, total_dist, info_out = controller.minDistanceBetweenCapitals(cont, countryA, countryB)
+print('\nRuta minima entre',countryA,'y',countryB)
+for path_ in lt.iterator(min_path):
+    print(info_out[path_['vertexA']]['name'],'-->',info_out[path_['vertexB']]['name'],'dist [km]:', path_['weight'])
+print('Total distance [km] :', total_dist)
+
 print('done')
