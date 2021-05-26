@@ -103,11 +103,11 @@ def LandingPointNN(analyzer, lp_name):
     adj_edges, sort_dist, info_out = model.LandingPointNN(analyzer, lp_name)
     return adj_edges, sort_dist, info_out
 
-def totalEdges(analyzer):
+def totalLPs(analyzer):
     """
-    Total de paradas de autobus
+    Total de landing points
     """
-    return model.totalEdges(analyzer)
+    return model.totalLPs(analyzer)
 
 
 def totalConnections(analyzer):
