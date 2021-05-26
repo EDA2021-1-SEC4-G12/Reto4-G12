@@ -55,12 +55,17 @@ def newAnalyzer():
     try:
         analyzer = {
                     'landing_points': None,
+                    'landing_points_names':None,
                     'connections': None,
-                    'contries': None,
+                    'countries': None,
                     'paths': None
                     }
 
         analyzer['landing_points'] = m.newMap(numelements=14000,
+                                     maptype='PROBING',
+                                     comparefunction=compareLandingPointIds)
+
+        analyzer['landing_points_names'] = m.newMap(numelements=14000,
                                      maptype='PROBING',
                                      comparefunction=compareLandingPointIds)
 
@@ -100,8 +105,6 @@ def addConnections(analyzer, connection):
         destination = int(connection['destination'])
         lenght = connection['cable_length']
         lenght = formatLength(lenght)
-        
-
         addNode(analyzer, origin)
         addNode(analyzer, destination)
         addEdge(analyzer, origin, destination, lenght)
@@ -211,17 +214,53 @@ def addLandingPoint(analyzer, lp):
     Agrega a una estacion, una ruta que es servida en ese paradero
     """
     lp_id = int(lp['landing_point_id'])
-    entry = m.get(analyzer['landing_points'], lp_id)
-    if entry is None:
-        new_entry = {'landing_point_id': int(lp['landing_point_id']),
-                     'ic': lp['id'],
-                     'name': lp['name'],
-                     'latitude': lp['latitude'],
-                     'longitude': lp['longitude']}
-        m.put(analyzer['landing_points'], lp_id, new_entry)
+    lp_name = lp['name'].split(',')[0]
+    entry_id = m.get(analyzer['landing_points'], lp_id)
+    entry_name = m.get(analyzer['landing_points_names'], lp_name)
+
+    if entry_id is None:
+        new_entry_id = {'landing_point_id': int(lp['landing_point_id']),
+                        'ic': lp['id'],
+                        'name': lp['name'],
+                        'latitude': lp['latitude'],
+                        'longitude': lp['longitude']}
+        m.put(analyzer['landing_points'], lp_id, new_entry_id)
+    if entry_name is None:
+        new_entry_name = {'name':lp['name'],
+                          'landing_point_id': int(lp['landing_point_id'])}
+        m.put(analyzer['landing_points_names'], lp_name, new_entry_name)
     return analyzer
 
 # Funciones de consulta
+
+
+def VertexInComponents(analyzer, vertex1, vertex2):
+    '''
+    Calcula si dos vertices pertenecen al mismo cluster
+    '''
+    n_components = NumberConnectedComponents(analyzer)
+    components = analyzer['components']
+    vert1_comp, vert2_comp = None, None
+    for elem_ in components['idscc']['table']['elements']:
+        if elem_['key'] == vertex1:
+            vert1_comp = elem_['value']
+        if elem_['key'] == vertex2:
+            vert2_comp = elem_['value']
+    
+    same_comp = False
+    if vert1_comp == vert2_comp:
+        same_comp = True
+
+    return n_components, same_comp
+
+
+def NumberConnectedComponents(analyzer):
+    """
+    Calcula los componentes conectados del grafo
+    Se utiliza el algoritmo de Kosaraju
+    """
+    analyzer['components'] = scc.KosarajuSCC(analyzer['connections'])
+    return scc.connectedComponents(analyzer['components'])
 
 def totalEdges(analyzer):
     """
@@ -235,6 +274,38 @@ def totalConnections(analyzer):
     Retorna el total arcos del grafo
     """
     return gr.numEdges(analyzer['connections'])
+
+def totalCountries(analyzer):
+    '''
+    Retorna el total de países cargados
+    '''
+    return m.size(analyzer['countries'])
+
+def getLastCountryInfo(analyzer):
+    '''
+    Retorna la informacion del ultimo pais cargado
+    '''
+    loaded_countries = m.keySet(analyzer['countries'])
+    last_country = lt.lastElement(loaded_countries)
+    info_country = m.get(analyzer['countries'],last_country)['value']
+    res = {'country': info_country['country_name'],
+           'population': info_country['population'],
+           'internet_users': info_country['internet_users']}
+    return res
+
+def getFirstLandingPointInfo(analyzer):
+    '''
+    Retorna la informacion del primer landing point cargado
+    '''
+    loaded_lp = gr.vertices(analyzer['connections'])
+    first_lp = lt.firstElement(loaded_lp)
+    lp_info = m.get(analyzer['landing_points'],first_lp)['value']
+    res = {'id': lp_info['landing_point_id'],
+           'name': lp_info['name'],
+           'lat': lp_info['latitude'],
+           'long': lp_info['longitude']}
+    return res
+
 
 # Funciones utilizadas para comparar elementos dentro de una lista
 
@@ -265,6 +336,17 @@ def formatLength(length):
         lenght = length.split(' ')
         lenght = float(lenght[0].replace(',',''))
     return lenght
+
+
+def formatVertex(analyzer, vertex_name):
+    '''
+    Formatea el nombre del vertice a su id
+    '''
+    vertex = m.get(analyzer['landing_points_names'],vertex_name)['value']
+    if vertex:
+        return vertex['landing_point_id']
+    else:
+        print('Landing point ', vertex_name, ' not found...')
 
 def compareroutes(route1, route2):
     """

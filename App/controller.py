@@ -71,6 +71,15 @@ def loadLandingPoints(analyzer):
 
 # Funciones de consulta sobre el catálogo
 
+
+def VertexInComponents(analyzer, vertex1, vertex2):
+    '''
+    Calcula si dos vertices pertenecen al mismo cluster
+    '''
+    n_components, same_comp = model.VertexInComponents(analyzer, vertex1, vertex2)
+    return n_components, same_comp
+
+
 def totalEdges(analyzer):
     """
     Total de paradas de autobus
@@ -83,3 +92,21 @@ def totalConnections(analyzer):
     Total de enlaces entre las paradas
     """
     return model.totalConnections(analyzer)
+
+def totalCountries(analyzer):
+    '''
+    Retorna el total de países cargados
+    '''
+    return model.totalCountries(analyzer)
+
+def getLastCountryInfo(analyzer):
+    '''
+    Retorna la informacion del ultimo pais cargado
+    '''
+    return model.getLastCountryInfo(analyzer)
+
+def getFirstLandingPointInfo(analyzer):
+    '''
+    Retorna la informacion del primer landing point cargado
+    '''
+    return model.getFirstLandingPointInfo(analyzer)
