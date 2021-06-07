@@ -50,7 +50,7 @@ def printMenu():
 
 
 def exMinima(analyzer):
-    ans=controller.infraRed(cont["connections"])
+    ans=controller.infraRed(analyzer)
     print("Numero de nodos conectados:"+str(ans[0]))
     print("Costo total de la red de expanción minima: "+str(ans[1]))
     print("La conexión más larga", str(ans[2]["key"]),"tiene una distancia en Km de ", str(ans[2]["value"]))
@@ -149,73 +149,3 @@ while True:
     else:
         sys.exit(0)
 sys.exit(0)
-
-#------------- debbug --------------------------
-# Input 1
-print("Cargando información de los archivos ....")
-cont = controller.init()
-controller.loadData(cont)
-numedges = controller.totalConnections(cont)
-numvertex = controller.totalLPs(cont)
-numcountries = controller.totalCountries(cont)
-firstlp = controller.getFirstLandingPointInfo(cont)
-lastcountry = controller.getLastCountryInfo(cont)
-print('\nNumero de landing points (vertices): ' + str(numvertex))
-print('Numero de conexiones (arcos): ' + str(numedges))
-print('Numero de paises : ' + str(numcountries))
-print('1st Landing point id: ', firstlp['id'],
-        '| nombre :', firstlp['name'],
-        '| cords :' , 'Lat. {} Long. {}'.format(firstlp['lat'],firstlp['long']))
-print('n-Country Info: ', lastcountry['country'], ' -- ',
-        'poblacion :', str(lastcountry['population']),
-        '| usuarios :', str(lastcountry['internet_users']))
-
-# Input 2 DONE
-# print('Definir landings points a analizar...')
-# lp1 = 'Redondo Beach'
-# lp2 = 'Vung Tau'
-# out = controller.VertexInComponents(cont, lp1, lp2)
-
-# Input 3 DONE
-maxdeg, mostconnected, info_out =  controller.mostConnectedLandingPoint(cont)
-print('\nLanding point(s) mas conectado(s)')
-for i, mostconn_ in enumerate(mostconnected):
-    print(i+1,'--', 'landing point id :', mostconn_,
-            '| nombre :', info_out[mostconn_]['name'],
-            '| conexiones :', maxdeg)
-# Input 4
-# print('\nDefinir paises para calcular la ruta minima...')
-# countryA = 'Colombia'
-# countryB = 'Argentina'
-# out = controller.minDistanceBetweenCapitals(cont, countryA, countryB)
-# if out[0] is not None:
-#     min_path = out[0]
-#     total_dist = out[1]
-#     info_out = out[0]
-#     print('\nRuta minima entre',countryA,'y',countryB)
-#     for path_ in lt.iterator(min_path):
-#         print(info_out[path_['vertexA']]['name'],'-->',info_out[path_['vertexB']]['name'],'dist [km]:', path_['weight'])
-#     print('Total distance [km] :', total_dist)
-# else:
-#     print('\nNo existe una ruta de conexion entre', countryA, 'y', countryB)
-
-# Input 5 DONE
-# lp = 'Fortaleza'
-# controller.simulateFailure(cont, lp)
-# print('\nNumero de paises afectados :',len(sort_dist))
-# for i, country_ in enumerate(sort_dist):
-#     print(i+1,'--',info_out[country_[0]]['name'].split(','),
-#           '| dist [km]: ', country_[1])
-
-# Input 8
-# print('\nEspecificar IPs')
-# IPA = '165.132.67.89'
-# cityA = ipapi.location(ip=IPA)['city']
-# print(cityA)
-# IPB = '8.8.8.8'
-# cityB = ipapi.location(ip=IPB)['city']
-# print(cityB)
-# min_path, total_dist, total_jumps, info_out = controller.minDistanceBetweenCities(cont, cityA, cityB)
-    
-
-print('done')

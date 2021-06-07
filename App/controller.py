@@ -196,7 +196,28 @@ def plotMostConnected(analyzer, info_out, lp):
         )
     fig.show()
 
-    pass
+
+def plotMST(df_plot):
+    fig = go.Figure()
+    for i in range(len(df_plot)):
+        fig.add_trace(
+            go.Scattergeo(
+                lon = [df_plot['lon_origin'][i], df_plot['lon_destination'][i]],
+                lat = [df_plot['lat_origin'][i], df_plot['lat_destination'][i]],
+                mode = 'lines',
+                line = dict(width = 1,color = 'red'),
+            ))
+    fig.update_layout(
+        title_text = 'MST',
+        showlegend = False,
+        geo = dict(
+            # projection_type = 'azimuthal equal area',
+            showland = True,
+            landcolor = 'rgb(243, 243, 243)',
+            countrycolor = 'rgb(204, 204, 204)',
+            ),
+        )
+    fig.show()
 
 # Funciones de ordenamiento
 
@@ -251,12 +272,38 @@ def LandingPointNN(analyzer, lp_name):
     return adj_edges, sort_dist, info_out
 
 def infraRed(analyzer):
-    prime=model.primSearch(analyzer)
-    totalNodes=model.totalNodes(prime["marked"])
+    prime=model.primSearch(analyzer["connections"])
+    # totalNodes=model.totalNodes(prime["marked"])
     minRoute=model.minRoute(prime)
-    largeConnection=model.largeConnection(analyzer,prime)
-    shortConnection=model.shortConnection(analyzer)
+    largeConnection=model.largeConnection(analyzer["connections"],prime)
+    shortConnection=model.shortConnection(analyzer["connections"])
+    df_plot = getVertexFromMST(analyzer,prime)
+    totalNodes=len(df_plot)
+    plotMST(df_plot)
     return totalNodes,minRoute,largeConnection,shortConnection
+
+
+def getVertexFromMST(analyzer,prime):
+    elements = prime['edgeTo']['table']['elements']
+    df_l = []
+    for elem in elements:
+        if elem['key'] is not None:
+            values = elem['value']
+            orig_lp = int(values['vertexA'].split('*')[0])
+            orig_lp_info = m.get(analyzer['landing_points'], orig_lp)['value']
+            dest_lp = int(values['vertexB'].split('*')[0])
+            dest_lp_info = m.get(analyzer['landing_points'], dest_lp)['value']
+            df_save = pd.DataFrame()
+            df_save['origin'] = [orig_lp]
+            df_save['destination'] = [dest_lp]
+            df_save['lat_origin'] = [orig_lp_info['latitude']]
+            df_save['lon_origin'] = [orig_lp_info['longitude']]
+            df_save['lat_destination'] = [dest_lp_info['latitude']]
+            df_save['lon_destination'] = [dest_lp_info['longitude']]
+            df_l.append(df_save)
+    df_plot = pd.concat(df_l)
+    df_plot = df_plot.reset_index()
+    return df_plot
 
 
 def maxBandWidth(analyzer, country, cable):
