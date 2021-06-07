@@ -182,7 +182,7 @@ def plotMostConnected(analyzer, info_out, lp):
                 lon = [df_plot['lon_origin'][i], df_plot['lon_destination'][i]],
                 lat = [df_plot['lat_origin'][i], df_plot['lat_destination'][i]],
                 mode = 'lines',
-                line = dict(width = 2,color = 'green'),
+                line = dict(width = 1,color = 'green'),
             ))
     fig.update_layout(
         title_text = 'Most Connected - {}'.format(info_out['name']),
@@ -205,10 +205,33 @@ def plotMST(df_plot):
                 lon = [df_plot['lon_origin'][i], df_plot['lon_destination'][i]],
                 lat = [df_plot['lat_origin'][i], df_plot['lat_destination'][i]],
                 mode = 'lines',
-                line = dict(width = 1,color = 'red'),
+                line = dict(width = 0.5,color = 'blue'),
             ))
     fig.update_layout(
         title_text = 'MST',
+        showlegend = False,
+        geo = dict(
+            # projection_type = 'azimuthal equal area',
+            showland = True,
+            landcolor = 'rgb(243, 243, 243)',
+            countrycolor = 'rgb(204, 204, 204)',
+            ),
+        )
+    fig.show()
+
+
+def plotFailure(df_plot, failed_city):
+    fig = go.Figure()
+    for i in range(len(df_plot)):
+        fig.add_trace(
+            go.Scattergeo(
+                lon = [df_plot['lon_origin'][i], df_plot['lon_destination'][i]],
+                lat = [df_plot['lat_origin'][i], df_plot['lat_destination'][i]],
+                mode = 'lines',
+                line = dict(width = 0.5,color = 'red'),
+            ))
+    fig.update_layout(
+        title_text = 'Effecto del fallo en {}'.format(failed_city),
         showlegend = False,
         geo = dict(
             # projection_type = 'azimuthal equal area',
@@ -262,6 +285,9 @@ def simulateFailure(analyzer, lp_name):
     Calcula la lista de paises afectados
     '''
     sort_vals,vert_dist_map,info_out_map, n_affected= model.simulateFailure(analyzer, lp_name)
+    lp_id = model.formatVertex(analyzer,lp_name)
+    df_plot = getVertexFromFail(analyzer,lp_id,vert_dist_map)
+    plotFailure(df_plot, lp_name)
     return sort_vals,vert_dist_map,info_out_map,n_affected
 
 def LandingPointNN(analyzer, lp_name):
@@ -305,6 +331,24 @@ def getVertexFromMST(analyzer,prime):
     df_plot = df_plot.reset_index()
     return df_plot
 
+def getVertexFromFail(analyzer,vertex_fail,vertex_affected):
+    df_l = []
+    for elem in vertex_affected.keys():
+        orig_lp = vertex_fail
+        orig_lp_info = m.get(analyzer['landing_points'], orig_lp)['value']
+        dest_lp = int(elem.split('*')[0])
+        dest_lp_info = m.get(analyzer['landing_points'], dest_lp)['value']
+        df_save = pd.DataFrame()
+        df_save['origin'] = [orig_lp]
+        df_save['destination'] = [dest_lp]
+        df_save['lat_origin'] = [orig_lp_info['latitude']]
+        df_save['lon_origin'] = [orig_lp_info['longitude']]
+        df_save['lat_destination'] = [dest_lp_info['latitude']]
+        df_save['lon_destination'] = [dest_lp_info['longitude']]
+        df_l.append(df_save)
+    df_plot = pd.concat(df_l)
+    df_plot = df_plot.reset_index()
+    return df_plot
 
 def maxBandWidth(analyzer, country, cable):
 

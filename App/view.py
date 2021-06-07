@@ -44,9 +44,9 @@ def printMenu():
     print("4- Encontrar ruta minima entre dos paises")
     print("5- Identificar red de expansion minima")
     print("6- Simular fallo de landing point")
-    print("7- Calcular el ancho de banda maximo (bono)")
-    print("8- Calcular la ruta minima para enviar informacion entre dos IPs (bono)")
-    print("9- Salir")
+    # print("7- Calcular el ancho de banda maximo (bono)")
+    # print("8- Calcular la ruta minima para enviar informacion entre dos IPs (bono)")
+    print("0- Salir")
 
 
 def exMinima(analyzer):
