@@ -25,6 +25,7 @@ import pandas as pd
 import model
 import csv
 import os
+from DISClib.ADT import map as m
 
 import plotly.graph_objects as go
 import pandas as pd
@@ -49,6 +50,8 @@ def loadData(analyzer):
     country_lps = loadLandingPoints(analyzer)
     minC_cables = loadConnections(analyzer)
     loadCountries(analyzer, country_lps, minC_cables)
+    # Plot 
+    plotConnectionsGraph()
 
 def loadLandingPoints(analyzer):
     landing_points_file = os.path.join('Data','landing_points.csv')
@@ -80,14 +83,118 @@ def loadCountries(analyzer, country_lps, minC_cables):
             country_i_lps = country_lps[country['CountryName']]
             model.addCountries(analyzer, country, country_i_lps, minC_cables)
         except:
-            print(country['CountryName'],'ot found in landing points...')
+            print(country['CountryName'],'not found in landing points...')
             continue
 
-def plotGraph():
+# Funciones de visualizacion
+
+def prepareDataPlot():
     connections_file = os.path.join('Data','connections.csv')
-    input_file = pd.read_csv(connections_file)
+    landing_points_file = os.path.join('Data','landing_points.csv')
+    df_cons = pd.read_csv(connections_file)
+    df_lps = pd.read_csv(landing_points_file)
+    # Merge origin coords
+    df_cons = df_cons.set_index('origin')
+    df_lps  = df_lps.rename(columns={'landing_point_id':'origin'}).set_index('origin')
+    df_orins = df_cons.merge(df_lps, how='left', on='origin')
+    df_orins = df_orins.rename(columns={'latitude':'lat_origin', 'longitude':'lon_origin'})
+    # Merge destination coords
+    df_lps = df_lps.reset_index()
+    df_lps = df_lps.rename(columns={'origin':'destination'}).set_index('destination')
+    df_end = df_orins.reset_index()
+    df_end = df_end.set_index('destination')
+    df_end = df_end.merge(df_lps, how='left', on='destination')
+    df_end = df_end.rename(columns={'latitude':'lat_destination', 'longitude':'lon_destination'})
+    df_end = df_end.drop(columns=['id_x','name_x','id_y','name_y'])
+    df_end = df_end.reset_index()
+    return df_end
+
+def plotConnectionsGraph():
+    connections = prepareDataPlot()
     fig = go.Figure()
-    fi
+    for i in range(len(connections)):
+        fig.add_trace(
+            go.Scattergeo(
+                lon = [connections['lon_origin'][i], connections['lon_destination'][i]],
+                lat = [connections['lat_origin'][i], connections['lat_destination'][i]],
+                mode = 'lines',
+                line = dict(width = 1,color = 'red'),
+                opacity = float(connections['capacityTBPS'][i]) / float(connections['capacityTBPS'].max()),
+            ))
+    fig.update_layout(
+        title_text = 'Connections',
+        showlegend = False,
+        geo = dict(
+            # projection_type = 'azimuthal equal area',
+            showland = True,
+            landcolor = 'rgb(243, 243, 243)',
+            countrycolor = 'rgb(204, 204, 204)',
+            ),
+        )
+    fig.show()
+
+def plotTwoLPs(analyzer,lp1, lp2):
+    landing_points_file = os.path.join('Data','landing_points.csv')
+    lps_info = pd.read_csv(landing_points_file)
+    lpA = model.formatVertex(analyzer,lp1)
+    lpB = model.formatVertex(analyzer,lp2)
+    lpA_info = lps_info[lps_info['landing_point_id']==lpA]
+    lpB_info = lps_info[lps_info['landing_point_id']==lpB]
+    # Plot
+    fig = go.Figure(data=go.Scattergeo(
+        lat = [lpA_info['latitude'].iloc[0], lpB_info['latitude'].iloc[0]],
+        lon = [lpA_info['longitude'].iloc[0], lpB_info['longitude'].iloc[0]],
+        mode = 'lines',
+        line = dict(width = 2, color = 'blue'),
+        ))
+    fig.update_layout(
+        title_text = 'Landing points in same cluster',
+        showlegend = False,
+        geo = dict(
+            # projection_type = 'azimuthal equal area',
+            showland = True,
+            landcolor = 'rgb(243, 243, 243)',
+            countrycolor = 'rgb(204, 204, 204)',
+            ),
+        )
+    fig.show()
+
+def plotMostConnected(analyzer, info_out, lp):
+    neighbors_lps =  info_out['neighbors']
+    df_l = []
+    for nn_lp in neighbors_lps:
+        lp_info = m.get(analyzer['landing_points'], nn_lp)['value']
+        df_save = pd.DataFrame()
+        df_save['origin'] = [lp]
+        df_save['destination'] = [nn_lp]
+        df_save['lat_origin'] = [info_out['lat']]
+        df_save['lon_origin'] = [info_out['lon']]
+        df_save['lat_destination'] = [lp_info['latitude']]
+        df_save['lon_destinatino'] = [lp_info['longitude']]
+        df_l.append(df_save)
+    df_plot = pd.concat(df_l)
+    # Plot
+    fig = go.Figure()
+    for i in range(len(df_plot)):
+        fig.add_trace(
+            go.Scattergeo(
+                lon = [df_plot['lon_origin'][i], df_plot['lon_destination'][i]],
+                lat = [df_plot['lat_origin'][i], df_plot['lat_destination'][i]],
+                mode = 'lines',
+                line = dict(width = 2,color = 'green'),
+            ))
+    fig.update_layout(
+        title_text = 'Most Connected - {}'.format(info_out['name']),
+        showlegend = False,
+        geo = dict(
+            # projection_type = 'azimuthal equal area',
+            showland = True,
+            landcolor = 'rgb(243, 243, 243)',
+            countrycolor = 'rgb(204, 204, 204)',
+            ),
+        )
+    fig.show()
+
     pass
 
 # Funciones de ordenamiento
@@ -100,6 +207,7 @@ def VertexInComponents(analyzer, vertex1, vertex2):
     Calcula si dos vertices pertenecen al mismo cluster
     '''
     n_components, same_comp = model.VertexInComponents(analyzer, vertex1, vertex2)
+    plotTwoLPs(analyzer,vertex1, vertex2)
     return n_components, same_comp
 
 
@@ -108,6 +216,8 @@ def mostConnectedLandingPoint(analyzer):
     Calcula los landing points mas conectados
     '''
     max_deg, max_lps, info_out = model.mostConnectedLandingPoint(analyzer)
+    for i in range(len(max_lps)):
+        plotMostConnected(analyzer, info_out[max_lps[i]], max_lps[i])
     return max_deg, max_lps, info_out
 
 

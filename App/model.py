@@ -295,7 +295,6 @@ def connectCapital(analyzer, country, country_lps, minC_cables):
     return analyzer
 
 
-
 def addCountry(analyzer, country):
     """
     Agrega a una estacion, una ruta que es servida en ese paradero
@@ -439,11 +438,15 @@ def mostConnectedLandingPoint(analyzer):
 
     info_out = {}   # save info of each max landing point
     for lp in max_lps:
+        _,_,info_lp=LandingPointNN(analyzer, lp)
+        neigbors = [int(nn.split('*')[0]) for nn in info_lp.keys()]
         lp_id = int(lp.split('*')[0])
         lp_info = m.get(analyzer['landing_points'],lp_id)['value']
         info_out[lp] = {'name':lp_info['name'],
-                        'deg':max_deg}
-
+                        'deg':max_deg,
+                        'lat':lp_info['latitude'],
+                        'lon':lp_info['longitude'],
+                        'neighbors':neigbors}
     return max_deg, max_lps, info_out
     
 
@@ -541,7 +544,7 @@ def LandingPointNN(analyzer, lp_vertex):
         nb = edge_['vertexB']
         nb_id = int(nb.split('*')[0])
         lp_info = m.get(analyzer['landing_points'],nb_id)['value']
-        info_out[edge_['vertexB']] = {'name':lp_info['name'],'dist':edge_['weight']}
+        info_out[edge_['vertexB']] = {'name':lp_info['name'],'dist':edge_['weight'],'id':nb_id}
         vert_dist[edge_['vertexB']] = edge_['weight']
     # sort_dist = sorted(vert_dist.items(), key=lambda x:x[1], reverse=True)
     return adj_edges, vert_dist, info_out

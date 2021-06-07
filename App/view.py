@@ -136,8 +136,6 @@ while True:
         print('\nCalcular ancho de banda maximo...')
         country = input('Pais : ')
         cable = input('Nombre del cable : ')
-        
-
 
     elif int(inputs[0]) == 8:     # Req 7
         print('\nEspecificar IPs')
@@ -174,32 +172,32 @@ print('n-Country Info: ', lastcountry['country'], ' -- ',
 
 # Input 2 DONE
 # print('Definir landings points a analizar...')
-# lp1 = input('Landing point 1: ')
-# lp2 = input('Landing point 2: ')
+# lp1 = 'Redondo Beach'
+# lp2 = 'Vung Tau'
 # out = controller.VertexInComponents(cont, lp1, lp2)
 
 # Input 3 DONE
-# maxdeg, mostconnected, info_out =  controller.mostConnectedLandingPoint(cont)
-# print('\nLanding point(s) mas conectado(s)')
-# for i, mostconn_ in enumerate(mostconnected):
-#     print(i+1,'--', 'landing point id :', mostconn_,
-#             '| nombre :', info_out[mostconn_]['name'],
-#             '| conexiones :', maxdeg)
+maxdeg, mostconnected, info_out =  controller.mostConnectedLandingPoint(cont)
+print('\nLanding point(s) mas conectado(s)')
+for i, mostconn_ in enumerate(mostconnected):
+    print(i+1,'--', 'landing point id :', mostconn_,
+            '| nombre :', info_out[mostconn_]['name'],
+            '| conexiones :', maxdeg)
 # Input 4
-print('\nDefinir paises para calcular la ruta minima...')
-countryA = 'Colombia'
-countryB = 'Argentina'
-out = controller.minDistanceBetweenCapitals(cont, countryA, countryB)
-if out[0] is not None:
-    min_path = out[0]
-    total_dist = out[1]
-    info_out = out[0]
-    print('\nRuta minima entre',countryA,'y',countryB)
-    for path_ in lt.iterator(min_path):
-        print(info_out[path_['vertexA']]['name'],'-->',info_out[path_['vertexB']]['name'],'dist [km]:', path_['weight'])
-    print('Total distance [km] :', total_dist)
-else:
-    print('\nNo existe una ruta de conexion entre', countryA, 'y', countryB)
+# print('\nDefinir paises para calcular la ruta minima...')
+# countryA = 'Colombia'
+# countryB = 'Argentina'
+# out = controller.minDistanceBetweenCapitals(cont, countryA, countryB)
+# if out[0] is not None:
+#     min_path = out[0]
+#     total_dist = out[1]
+#     info_out = out[0]
+#     print('\nRuta minima entre',countryA,'y',countryB)
+#     for path_ in lt.iterator(min_path):
+#         print(info_out[path_['vertexA']]['name'],'-->',info_out[path_['vertexB']]['name'],'dist [km]:', path_['weight'])
+#     print('Total distance [km] :', total_dist)
+# else:
+#     print('\nNo existe una ruta de conexion entre', countryA, 'y', countryB)
 
 # Input 5 DONE
 # lp = 'Fortaleza'
