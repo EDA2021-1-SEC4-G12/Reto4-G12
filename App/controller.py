@@ -106,8 +106,8 @@ def minDistanceBetweenCapitals(analyzer, countryA, countryB):
     '''
     Calcula la distancia minima entre las capitales de dos paises dados
     '''
-    min_path, total_dist, info_out = model.minDistanceBetweenCapitals(analyzer, countryA, countryB)
-    return min_path, total_dist, info_out
+    out = model.minDistanceBetweenCapitals(analyzer, countryA, countryB)
+    return out
 
 def minDistanceBetweenCities(analyzer, cityA, cityB):
     '''
@@ -120,7 +120,8 @@ def simulateFailure(analyzer, lp_name):
     '''
     Calcula la lista de paises afectados
     '''
-    model.simulateFailure(analyzer, lp_name)
+    sort_vals,vert_dist_map,info_out_map, n_affected= model.simulateFailure(analyzer, lp_name)
+    return sort_vals,vert_dist_map,info_out_map,n_affected
 
 def LandingPointNN(analyzer, lp_name):
     '''
@@ -128,6 +129,15 @@ def LandingPointNN(analyzer, lp_name):
     '''
     adj_edges, sort_dist, info_out = model.LandingPointNN(analyzer, lp_name)
     return adj_edges, sort_dist, info_out
+
+def infraRed(analyzer):
+    prime=model.primSearch(analyzer)
+    totalNodes=model.totalNodes(prime["marked"])
+    minRoute=model.minRoute(prime)
+    largeConnection=model.largeConnection(analyzer,prime)
+    shortConnection=model.shortConnection(analyzer)
+    return totalNodes,minRoute,largeConnection,shortConnection
+
 
 def totalLPs(analyzer):
     """

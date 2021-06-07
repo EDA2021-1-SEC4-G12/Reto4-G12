@@ -34,10 +34,11 @@ import config as cf
 from DISClib.ADT.graph import gr
 from DISClib.ADT import list as lt
 from DISClib.ADT import map as m
-from DISClib.Algorithms.Graphs import scc
+from DISClib.Algorithms.Graphs import scc, prim
 from DISClib.Algorithms.Graphs import dijsktra as djk
 from DISClib.DataStructures import mapentry as me
 from DISClib.Algorithms.Sorting import shellsort as sa
+from DISClib.Algorithms.Sorting import mergesort as merg
 from DISClib.Utils import error as error
 assert cf
 
@@ -456,6 +457,7 @@ def minDistanceBetweenCapitals(analyzer, countryA, countryB):
     lpB = formatVertexCapitals(analyzer, capitalB)
     analyzer['min_dists_paths'] = djk.Dijkstra(analyzer['connections'], lpA)
     min_path = djk.pathTo(analyzer['min_dists_paths'], lpB)
+    cost = djk.distTo(analyzer['min_dists_paths'], lpB)
 
     if min_path is not None:
         info_out = {}   # save info of each landing point
@@ -463,11 +465,12 @@ def minDistanceBetweenCapitals(analyzer, countryA, countryB):
         for lp in lt.iterator(min_path):
             total_dist += lp['weight']
             for vertex in ['vertexA','vertexB']:
+                vertex = InterruptedError(vertex.split('*')[0])
                 lp_info = m.get(analyzer['landing_points'],lp[vertex])['value']
                 info_out[lp[vertex]] = {'name':lp_info['name']}
-        return min_path, total_dist, info_out
+        return [min_path, total_dist, info_out]
     else:
-        return min_path
+        return [min_path]
 
 
 def minDistanceBetweenCities(analyzer, cityA, cityB):
@@ -511,6 +514,7 @@ def simulateFailure(analyzer, lp_name):
             info_out_list.append(info_out)
     vert_dist_map = {}
     info_out_map  = {}
+    countries = []
     for i in range(len(vert_dist_list)):
         dists = vert_dist_list[i]
         verts = info_out_list[i]
@@ -518,12 +522,11 @@ def simulateFailure(analyzer, lp_name):
             vert_dist_map[k] = v
         for k, v in verts.items():
             info_out_map[k] = v
+            countries.append(v['name'].split(', ')[-1])
     sort_vals = sorted(vert_dist_map.items(), key=lambda x:x[1], reverse=True)
-
-    return sort_vals,vert_dist_list,info_out_list
-
-        
-
+    affected_countries = list(dict.fromkeys(countries))
+    n_affected = len(affected_countries)
+    return sort_vals,vert_dist_map,info_out_map,n_affected
 
 
 def LandingPointNN(analyzer, lp_vertex):
@@ -542,6 +545,43 @@ def LandingPointNN(analyzer, lp_vertex):
         vert_dist[edge_['vertexB']] = edge_['weight']
     # sort_dist = sorted(vert_dist.items(), key=lambda x:x[1], reverse=True)
     return adj_edges, vert_dist, info_out
+
+def primSearch(analyzer):
+     analyzer["prim"] = prim.PrimMST(analyzer)
+     return analyzer["prim"]
+
+def totalNodes(mst):
+    return m.size(mst)
+
+def minRoute(mst):
+    mst=mst["distTo"]
+    keys=m.keySet(mst)
+    suma=0.0
+    for elementos in lt.iterator(keys):
+        info = m.get(mst,elementos)
+        if info["value"] >100000000: 
+            suma+=0
+        else:
+            suma+=info["value"]
+    return suma
+
+def largeConnection(analyzer,mst):
+    componentes=normalList(mst["distTo"])
+    analyzer["mst_organized"]=merge_sort(componentes,lt.size(componentes),cmpfunction_merge)
+    return lt.firstElement(analyzer["mst_organized"])
+
+def shortConnection(analyzer):
+    return lt.getElement(analyzer["mst_organized"],lt.size(analyzer["mst_organized"]))
+
+def normalList(mst):
+    normal_list=lt.newList(datastructure="ARRAY_LIST")
+    keys=m.keySet(mst)
+    for element in lt.iterator(keys):
+        lt.addLast(normal_list,m.get(mst,element))
+    return normal_list
+
+def cmpfunction_merge(vertex1, vertex2):
+    return (float(vertex1["value"]) > float(vertex2["value"]))
 
 
 def totalLPs(analyzer):
@@ -590,6 +630,17 @@ def getFirstLandingPointInfo(analyzer):
 
 
 # Funciones utilizadas para comparar elementos dentro de una lista
+
+def cmpfunction_merge(vertex1, vertex2):
+
+    return (float(vertex1["value"]) > float(vertex2["value"]))
+
+def merge_sort(lista,size,cmpfunction_merge):
+    sub_list = lt.subList(lista,0, size)
+    sub_list = lista.copy()
+    sorted_list=merg.sort(sub_list, cmpfunction_merge)
+    return  sorted_list
+
 
 # Funciones de ordenamiento
 
