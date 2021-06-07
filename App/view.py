@@ -111,7 +111,7 @@ while True:
         if out[0] is not None:
             min_path = out[0]
             total_dist = out[1]
-            info_out = out[0]
+            info_out = out[2]
             print('\nRuta minima entre',countryA,'y',countryB)
             for path_ in lt.iterator(min_path):
                 print(info_out[path_['vertexA']]['name'],'-->',info_out[path_['vertexB']]['name'],'dist [km]:', path_['weight'])
@@ -119,7 +119,7 @@ while True:
         else:
             print('\nNo existe una ruta de conexion entre', countryA, 'y', countryB)
 
-    elif int(inputs[0]) == 5:
+    elif int(inputs[0]) == 5:     # Req 4
         print('\n Calculando red de expansión minima...')
         exMinima(cont)
 
@@ -131,6 +131,13 @@ while True:
         for i, country_ in enumerate(sort_vals):
             print(i+1,'--',info_out_map[country_[0]]['name'],
                 '| dist [km]: ', country_[1])
+
+    elif int(inputs[0]) == 7:     # Req 6
+        print('\nCalcular ancho de banda maximo...')
+        country = input('Pais : ')
+        cable = input('Nombre del cable : ')
+        
+
 
     elif int(inputs[0]) == 8:     # Req 7
         print('\nEspecificar IPs')
