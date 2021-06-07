@@ -170,9 +170,10 @@ def plotMostConnected(analyzer, info_out, lp):
         df_save['lat_origin'] = [info_out['lat']]
         df_save['lon_origin'] = [info_out['lon']]
         df_save['lat_destination'] = [lp_info['latitude']]
-        df_save['lon_destinatino'] = [lp_info['longitude']]
+        df_save['lon_destination'] = [lp_info['longitude']]
         df_l.append(df_save)
     df_plot = pd.concat(df_l)
+    df_plot = df_plot.reset_index()
     # Plot
     fig = go.Figure()
     for i in range(len(df_plot)):
