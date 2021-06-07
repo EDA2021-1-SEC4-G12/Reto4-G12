@@ -24,9 +24,12 @@
  * Dario Correal - Version inicial
  """
 
-
+import pandas as pd
+import random
+from haversine import haversine
 from os import name
 from sys import int_info
+from typing import Coroutine
 import config as cf
 from DISClib.ADT.graph import gr
 from DISClib.ADT import list as lt
@@ -71,6 +74,14 @@ def newAnalyzer():
                                      maptype='PROBING',
                                      comparefunction=compareLandingPointIds)
 
+        analyzer['landing_points_capitals'] = m.newMap(numelements=14000,
+                                     maptype='PROBING',
+                                     comparefunction=compareLandingPointIds)
+
+        analyzer['landing_points_names_capitals'] = m.newMap(numelements=14000,
+                                     maptype='PROBING',
+                                     comparefunction=compareLandingPointIds)
+
         analyzer['countries'] = m.newMap(numelements=14000,
                                      maptype='PROBING',
                                      comparefunction=compareLandingPointIds)
@@ -90,7 +101,7 @@ def newAnalyzer():
 
 # Funciones para agregar informacion al catalogo
 
-def addConnections(analyzer, connection):
+def addConnections(analyzer, connections):
     """
     Adiciona las estaciones al grafo como vertices y arcos entre las
     estaciones adyacentes.
@@ -103,21 +114,91 @@ def addConnections(analyzer, connection):
     Si la estacion sirve otra ruta, se tiene: 75009-101
     """
     try:
-        origin = int(connection['\ufefforigin'])
-        destination = int(connection['destination'])
-        lenght = connection['cable_length']
-        # if lenght != 'n.a.':
-        lenght = formatLength(lenght)
-        addNode(analyzer, origin)
-        addNode(analyzer, destination)
-        addEdge(analyzer, origin, destination, lenght)
-        addPath(analyzer, origin, destination, connection)
-        return analyzer
+        vertex_listA = []
+        vertex_listB = []
+        dupsA = []
+        dupsB = []
+        lp_cables_min_cap = {}
+        for i, connection in connections.iterrows():
+            # Get origin
+            origin = int(connection['origin']); origin_cable = connection['cable_id']
+            origin_lp = str(origin) + '*' + origin_cable
+            # Get destination
+            destination = int(connection['destination']); destination_cable = connection['cable_id']
+            destination_lp = str(destination) + '*' + destination_cable
+            # Get distance given coordinates
+            distance = getDistance(analyzer, origin, destination)
+            # Add nodes to graph
+            addNode(analyzer, origin_lp)
+            addNode(analyzer, destination_lp)
+            # Add bidirectional
+            addEdge(analyzer, origin_lp, destination_lp, distance)
+            addEdge(analyzer, destination_lp, origin_lp, distance)
+            # Add path pointer lpA -> lpB and lpB -> lpA
+            addPath(analyzer, origin_lp, destination_lp, connection)
+            addPath(analyzer, destination_lp, origin_lp, connection)
+            # Add to vertex list
+            vertex_listA.append(origin)
+            vertex_listB.append(destination)
+            # Check if duplicated
+            if origin in vertex_listA:
+                dupsA.append(origin)
+            if destination in vertex_listB:
+                dupsB.append(destination)
+            # Check if cable already saved
+            if origin not in list(lp_cables_min_cap.keys()):
+                # Add lp cable with min capacity
+                sort_TBPS = connections[connections['origin']==origin].sort_values(by=['capacityTBPS']).iloc[0]
+                lp_cables_min_cap[origin] = {'cable_id':sort_TBPS['cable_id']}
+
+        # Connect repeated
+        for dup_vert in dupsA: # Origins
+            get_info = connections[connections['origin']==dup_vert]
+            origin_list = get_info['origin'].tolist()
+            cable_id_list = get_info['cable_id'].tolist()
+            origins_list_lp = []
+            for i in range(len(origin_list)):
+                conn = str(origin_list[i]) + '*' + cable_id_list[i]
+                if conn not in origins_list_lp: 
+                    origins_list_lp.append(conn)
+            # Create circular list
+            origins_circular = []
+            for i in range(len(origins_list_lp)-1):
+                origins_circular.append([origins_list_lp[i],origins_list_lp[i+1]])
+            # Close circular list
+            origins_circular.append([origins_list_lp[0],origins_list_lp[-1]])
+
+        for dup_vert in dupsB: # Destinations
+            get_info = connections[connections['destination']==dup_vert]
+            destination_list = get_info['destination'].tolist()
+            cable_id_list = get_info['cable_id'].tolist()
+            destinations_list_lp = []
+            for i in range(len(destination_list)):
+                conn = str(destination_list[i]) + '*' + cable_id_list[i]
+                if conn not in destinations_list_lp: 
+                    destinations_list_lp.append(conn)
+            # Create circular list
+            destinations_circular = []
+            for i in range(len(destinations_list_lp)-1):
+                destinations_circular.append([destinations_list_lp[i],destinations_list_lp[i+1]])
+            # Close circular list
+            destinations_circular.append([destinations_list_lp[0],destinations_list_lp[-1]])
+            
+        for dups_origin in origins_circular:
+            # Add bidirectional
+            addEdge(analyzer, dups_origin[0], dups_origin[1], 0.1)
+            addEdge(analyzer, dups_origin[1], dups_origin[0], 0.1)
+        for dups_dests in destinations_circular:
+            # Add bidirectional
+            addEdge(analyzer, dups_dests[0], dups_dests[1], 0.1)
+            addEdge(analyzer, dups_dests[1], dups_dests[0], 0.1)
+
+        return analyzer, lp_cables_min_cap
     except Exception as exp:
         error.reraise(exp, 'model:addNodeConnection')
 
 
-def addCountries(analyzer, country):
+def addCountries(analyzer, country, country_lps, minC_cables):
     """
     Adiciona las estaciones al grafo como vertices y arcos entre las
     estaciones adyacentes.
@@ -130,6 +211,7 @@ def addCountries(analyzer, country):
     Si la estacion sirve otra ruta, se tiene: 75009-101
     """
     try:
+        connectCapital(analyzer, country, country_lps, minC_cables)
         addCountry(analyzer, country)
         return analyzer
     except Exception as exp:
@@ -150,6 +232,8 @@ def addLandingPoints(analyzer, lp):
     """
     try:
         addLandingPoint(analyzer, lp)
+        #addCountryLandingPoint(analyzer, lp)
+
         return analyzer
     except Exception as exp:
         error.reraise(exp, 'model:addLandingPoint')
@@ -167,14 +251,49 @@ def addNode(analyzer, lpoint_id):
     except Exception as exp:
         error.reraise(exp, 'model:addconnection')
 
-def addEdge(analyzer, origin, destination, lenght):
+def addEdge(analyzer, origin, destination, weight):
     """
     Adiciona un arco entre dos estaciones
     """
     edge = gr.getEdge(analyzer['connections'], origin, destination)
     if edge is None:
-        gr.addEdge(analyzer['connections'], origin, destination, lenght)
+        gr.addEdge(analyzer['connections'], origin, destination, weight)
     return analyzer
+    
+def connectCapital(analyzer, country, country_lps, minC_cables):
+    '''
+    Conectar la capital los landing points del pais
+    '''
+    country_name = country['CountryName']
+    capital_name = country['CapitalName']
+    # Generate ld id
+    capital_id = random.randint(0,3000)
+    # Get coords capital
+    cap_lat = float(country['CapitalLatitude'])
+    cap_lon = float(country['CapitalLongitude'])
+    capital_coors = (cap_lat, cap_lon)
+    # Get landing points to connect
+    # country_lps = m.get(analyzer['landing_points_countries'], country_name)['value']['landing_points']
+    for lp in country_lps:
+        lp = int(lp)
+        min_cable_lp = minC_cables[lp]['cable_id']
+        capital_lp = str(capital_id) + '*' + min_cable_lp
+        destination_lp = str(lp) + '*' + min_cable_lp
+        # Add capital node
+        addNode(analyzer,capital_lp)
+        addNode(analyzer,destination_lp)
+        # Get coords lp
+        destination_coords = getCoordsLPs(analyzer, lp)
+        # Get distance
+        distance = int(haversine(capital_coors, destination_coords))
+        # Add bidirectional
+        addEdge(analyzer, capital_lp, destination_lp, distance)
+        addEdge(analyzer, destination_lp, capital_lp, distance)
+        # Save capital as lp
+        addCapitalLandingPoint(analyzer, capital_name, country_name, capital_id, capital_coors, capital_lp)
+    return analyzer
+
+
 
 def addCountry(analyzer, country):
     """
@@ -194,12 +313,11 @@ def addCountry(analyzer, country):
         m.put(analyzer['countries'], country_name, new_entry)
     return analyzer
 
-
 def addPath(analyzer, origin, destination, connection):
     """
     Agrega a una estacion, una ruta que es servida en ese paradero
     """
-    path = str(origin) + '-' + str(destination)
+    path = str(origin) + '>' + str(destination)
     entry = m.get(analyzer['paths'], path)
     if entry is None:
         new_entry = {'origin': origin,
@@ -223,18 +341,53 @@ def addLandingPoint(analyzer, lp):
 
     if entry_id is None:
         new_entry_id = {'landing_point_id': int(lp['landing_point_id']),
-                        'ic': lp['id'],
+                        'id': lp['id'],
                         'name': lp['name'],
-                        'latitude': lp['latitude'],
-                        'longitude': lp['longitude']}
+                        'latitude': float(lp['latitude']),
+                        'longitude': float(lp['longitude'])}
         m.put(analyzer['landing_points'], lp_id, new_entry_id)
     if entry_name is None:
-        new_entry_name = {'name':lp['name'],
-                          'landing_point_id': int(lp['landing_point_id'])}
+        new_entry_name = {'name': lp['name'],
+                          'landing_point_id': int(lp['landing_point_id']),
+                          'latitude': float(lp['latitude']),
+                          'longitude': float(lp['longitude'])}
         m.put(analyzer['landing_points_names'], lp_name, new_entry_name)
     return analyzer
 
-# Funciones de consulta
+def addCapitalLandingPoint(analyzer, lp_name, lp_coutry_name, lp_id, coords, lp_save):
+    """
+    Agrega a una estacion, una ruta que es servida en ese paradero
+    """
+    # lp_name is capital name
+    # lp_id is generated random number id
+
+    # entry_id = m.get(analyzer['landing_points_capitals'], lp_id)
+    # if entry_id is None:
+    new_entry_id = {'name': lp_name,
+                        'landing_point_id': lp_id,
+                        'landing_point_vertex': lp_save,
+                        'latitude': coords[0],
+                        'longitude': coords[1]}
+    m.put(analyzer['landing_points_capitals'], lp_id, new_entry_id)
+
+    # entry_name = m.get(analyzer['landing_points_names_capitals'], lp_name)
+    # if entry_name is None:
+    new_entry_name = {'name': lp_name,
+                        'landing_point_id': lp_id,
+                        'landing_point_vertex': lp_save,
+                        'latitude': coords[0],
+                        'longitude': coords[1]}
+    m.put(analyzer['landing_points_names_capitals'], lp_name, new_entry_name)
+
+    entry_id = m.get(analyzer['landing_points'], lp_id)
+    if entry_id is None:
+        new_entry_id = {'name': lp_name + ', ' + lp_coutry_name,
+                        'landing_point_id': lp_id,
+                        'latitude': coords[0],
+                        'longitude': coords[1]}
+        m.put(analyzer['landing_points'], lp_id, new_entry_id)
+    return analyzer
+
 
 
 def VertexInComponents(analyzer, vertex1, vertex2):
@@ -285,7 +438,8 @@ def mostConnectedLandingPoint(analyzer):
 
     info_out = {}   # save info of each max landing point
     for lp in max_lps:
-        lp_info = m.get(analyzer['landing_points'],lp)['value']
+        lp_id = int(lp.split('*')[0])
+        lp_info = m.get(analyzer['landing_points'],lp_id)['value']
         info_out[lp] = {'name':lp_info['name'],
                         'deg':max_deg}
 
@@ -298,39 +452,96 @@ def minDistanceBetweenCapitals(analyzer, countryA, countryB):
     '''
     capitalA = getCapital(analyzer, countryA)
     capitalB = getCapital(analyzer, countryB)
-    nameA = '{}, {}'.format(capitalA, countryA)
-    nameB = '{}, {}'.format(capitalB, countryB)
-    lpA = formatVertex(analyzer, capitalA)
-    lpB = formatVertex(analyzer, capitalB)
+    lpA = formatVertexCapitals(analyzer, capitalA)
+    lpB = formatVertexCapitals(analyzer, capitalB)
     analyzer['min_dists_paths'] = djk.Dijkstra(analyzer['connections'], lpA)
     min_path = djk.pathTo(analyzer['min_dists_paths'], lpB)
-    
-    info_out = {}   # save info of each landing point
-    total_dist = 0
-    for lp in lt.iterator(min_path):
-        total_dist += lp['weight']
-        for vertex in ['vertexA','vertexB']:
-            lp_info = m.get(analyzer['landing_points'],lp[vertex])['value']
-            info_out[lp[vertex]] = {'name':lp_info['name']}
 
-    return min_path, total_dist, info_out
+    if min_path is not None:
+        info_out = {}   # save info of each landing point
+        total_dist = 0
+        for lp in lt.iterator(min_path):
+            total_dist += lp['weight']
+            for vertex in ['vertexA','vertexB']:
+                lp_info = m.get(analyzer['landing_points'],lp[vertex])['value']
+                info_out[lp[vertex]] = {'name':lp_info['name']}
+        return min_path, total_dist, info_out
+    else:
+        return min_path
 
 
-def LandingPointNN(analyzer, lp_name):
+def minDistanceBetweenCities(analyzer, cityA, cityB):
+    '''
+    Calcula la distancia minima entre las capitales de dos paises dados
+    '''
+    lpA = formatVertex(analyzer, cityA)
+    lpB = formatVertex(analyzer, cityB)
+    analyzer['min_dists_paths'] = djk.Dijkstra(analyzer['connections'], lpA)
+    min_path = djk.pathTo(analyzer['min_dists_paths'], lpB)
+
+    if min_path is not None:
+        info_out = {}   # save info of each landing point
+        total_dist = 0
+        total_jumps = 0
+        for lp in lt.iterator(min_path):
+            total_dist += lp['weight']
+            total_jumps += 1
+            for vertex in ['vertexA','vertexB']:
+                lp_info = m.get(analyzer['landing_points'],lp[vertex])['value']
+                info_out[lp[vertex]] = {'name':lp_info['name']}
+        return min_path, total_dist, total_jumps, info_out
+    else:
+        return min_path
+
+def simulateFailure(analyzer, lp_name):
+    '''
+    Calcula la lista de paises afectados
+    '''
+    lp_fail = formatVertex(analyzer, lp_name)
+    landing_points = gr.vertices(analyzer['connections'])
+    adj_edges_list = []
+    vert_dist_list = []
+    info_out_list  = []
+    for lp in lt.iterator(landing_points):
+        lp_id = int(lp.split('*')[0])
+        if lp_fail == lp_id:
+            adj_edges, vert_dist, info_out = LandingPointNN(analyzer, lp)
+            adj_edges_list.append(adj_edges)
+            vert_dist_list.append(vert_dist)
+            info_out_list.append(info_out)
+    vert_dist_map = {}
+    info_out_map  = {}
+    for i in range(len(vert_dist_list)):
+        dists = vert_dist_list[i]
+        verts = info_out_list[i]
+        for k, v in dists.items():
+            vert_dist_map[k] = v
+        for k, v in verts.items():
+            info_out_map[k] = v
+    sort_vals = sorted(vert_dist_map.items(), key=lambda x:x[1], reverse=True)
+
+    return sort_vals,vert_dist_list,info_out_list
+
+        
+
+
+
+def LandingPointNN(analyzer, lp_vertex):
     '''
     Calcula los landing points vecinos
     '''
-    lp = formatVertex(analyzer, lp_name)
-    adj_edges = gr.adjacentEdges(analyzer['connections'], lp)
+    adj_edges = gr.adjacentEdges(analyzer['connections'], lp_vertex)
 
     info_out = {}   # save info of each landing point
     vert_dist = {}
     for edge_ in lt.iterator(adj_edges):
-        lp_info = m.get(analyzer['landing_points'],edge_['vertexB'])['value']
+        nb = edge_['vertexB']
+        nb_id = int(nb.split('*')[0])
+        lp_info = m.get(analyzer['landing_points'],nb_id)['value']
         info_out[edge_['vertexB']] = {'name':lp_info['name'],'dist':edge_['weight']}
         vert_dist[edge_['vertexB']] = edge_['weight']
-    sort_dist = sorted(vert_dist.items(), key=lambda x:x[1], reverse=True)
-    return adj_edges, sort_dist, info_out
+    # sort_dist = sorted(vert_dist.items(), key=lambda x:x[1], reverse=True)
+    return adj_edges, vert_dist, info_out
 
 
 def totalLPs(analyzer):
@@ -368,7 +579,7 @@ def getFirstLandingPointInfo(analyzer):
     '''
     Retorna la informacion del primer landing point cargado
     '''
-    loaded_lp = gr.vertices(analyzer['connections'])
+    loaded_lp = m.keySet(analyzer['landing_points'])
     first_lp = lt.firstElement(loaded_lp)
     lp_info = m.get(analyzer['landing_points'],first_lp)['value']
     res = {'id': lp_info['landing_point_id'],
@@ -418,6 +629,49 @@ def formatVertex(analyzer, vertex_name):
         return vertex['landing_point_id']
     else:
         print('Landing point ', vertex_name, ' not found...')
+
+def vertexInfo(analyzer, vertex_id):
+    '''
+    Formatea el nombre del vertice a su id
+    '''
+    vertex = m.get(analyzer['landing_points'],vertex_id)['value']
+    if vertex:
+        return vertex['landing_point_id']
+    else:
+        print('Landing point ', vertex_id, ' not found...')
+
+
+def formatVertexCapitals(analyzer, vertex_name):
+    '''
+    Formatea el nombre del vertice a su id
+    '''
+    vertex = m.get(analyzer['landing_points_names_capitals'],vertex_name)['value']
+    if vertex:
+        return vertex['landing_point_vertex']
+    else:
+        print('Landing point ', vertex_name, ' not found...')
+
+
+def getDistance(analyzer, origin, destination):
+    '''
+    Retorna la ditancia Hervesiana entre dos landing points
+    '''
+    coords_origin = getCoordsLPs(analyzer, origin)
+    coords_destination = getCoordsLPs(analyzer, destination)
+    distance = int(haversine(coords_origin, coords_destination))
+    return distance
+
+
+def getCoordsLPs(analyzer, lp_id):
+    '''
+    Retorna las coordenadas dado un landing point
+    '''
+    lp = m.get(analyzer['landing_points'], lp_id)['value']
+    if lp:
+        coords = (lp['latitude'], lp['longitude'])
+        return coords
+    else:
+        print('Landing point not found...')
 
 
 def getCapital(analyzer, country_name):

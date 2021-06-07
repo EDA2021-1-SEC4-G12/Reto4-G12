@@ -22,6 +22,7 @@
 
 import config as cf
 import sys
+import ipapi
 import controller
 from DISClib.ADT import list as lt
 assert cf
@@ -48,73 +49,81 @@ def printMenu():
 
 catalog = None
 
-"""
-Menu principal
-"""
-while True:
-    printMenu()
-    inputs = input('Seleccione una opción para continuar\n')
-    if int(inputs[0]) == 1:
-        print("Cargando información de los archivos ....")
-        cont = controller.init()
-        controller.loadData(cont)
-        numedges = controller.totalConnections(cont)
-        numvertex = controller.totalLPs(cont)
-        numcountries = controller.totalCountries(cont)
-        firstlp = controller.getFirstLandingPointInfo(cont)
-        lastcountry = controller.getLastCountryInfo(cont)
-        print('Numero de landing points (vertices): ' + str(numvertex))
-        print('Numero de conexiones (arcos): ' + str(numedges))
-        print('Numero de paises : ' + str(numcountries))
-        print('1st Landing point id: ', firstlp['id'],
-              '| nombre :', firstlp['name'],
-              '| cords :' , 'Lat. {} Long. {}'.format(firstlp['lat'],firstlp['long']))
-        print('n-Country Info: ', lastcountry['country'], ' -- ',
-              'poblacion :', str(lastcountry['population']),
-              '| usuarios :', str(lastcountry['internet_users']))
+# """
+# Menu principal
+# """
+# while True:
+#     printMenu()
+#     inputs = input('Seleccione una opción para continuar\n')
+#     if int(inputs[0]) == 1:
+#         print("Cargando información de los archivos ....")
+#         cont = controller.init()
+#         controller.loadData(cont)
+#         numedges = controller.totalConnections(cont)
+#         numvertex = controller.totalLPs(cont)
+#         numcountries = controller.totalCountries(cont)
+#         firstlp = controller.getFirstLandingPointInfo(cont)
+#         lastcountry = controller.getLastCountryInfo(cont)
+#         print('Numero de landing points (vertices): ' + str(numvertex))
+#         print('Numero de conexiones (arcos): ' + str(numedges))
+#         print('Numero de paises : ' + str(numcountries))
+#         print('1st Landing point id: ', firstlp['id'],
+#               '| nombre :', firstlp['name'],
+#               '| cords :' , 'Lat. {} Long. {}'.format(firstlp['lat'],firstlp['long']))
+#         print('Last country Info: ', lastcountry['country'], ' -- ',
+#               'poblacion :', str(lastcountry['population']),
+#               '| usuarios :', str(lastcountry['internet_users']))
 
-    elif int(inputs[0]) == 2:
-        print('\nDefinir landings points a analizar...')
-        lp1 = input('Landing point 1: ')
-        lp2 = input('Landing point 2: ')
-        n_comp, same = controller.VertexInComponents(cont, lp1, lp2)
-        print('Numero total de clusters :', n_comp)
-        if same is True:
-            print(lp1,'y',lp2,'SI pertenecen al mismo cluster.')
-        else:
-            print(lp1,'y',lp2,'NO pertenecen al mismo cluster.')
+#     elif int(inputs[0]) == 2:     # Req 1
+#         print('\nDefinir landings points a analizar...')
+#         lp1 = input('Landing point 1: ')
+#         lp2 = input('Landing point 2: ')
+#         n_comp, same = controller.VertexInComponents(cont, lp1, lp2)
+#         print('Numero total de clusters :', n_comp)
+#         if same is True:
+#             print(lp1,'y',lp2,'SI pertenecen al mismo cluster.')
+#         else:
+#             print(lp1,'y',lp2,'NO pertenecen al mismo cluster.')
 
-    elif int(inputs[0]) == 3:
-        maxdeg, mostconnected, info_out =  controller.mostConnectedLandingPoint(cont)
-        print('\nLanding point(s) mas conectado(s)')
-        for i, mostconn_ in enumerate(mostconnected):
-            print(i+1,'--', 'landing point id :', mostconn_,
-                  '| nombre :', info_out[mostconn_]['name'],
-                  '| conexiones :', maxdeg)
+#     elif int(inputs[0]) == 3:     # Req 2
+#         maxdeg, mostconnected, info_out =  controller.mostConnectedLandingPoint(cont)
+#         print('\nLanding point(s) mas conectado(s)')
+#         for i, mostconn_ in enumerate(mostconnected):
+#             print(i+1,'--', 'landing point id :', mostconn_,
+#                   '| nombre :', info_out[mostconn_]['name'],
+#                   '| conexiones :', maxdeg)
 
-    elif int(inputs[0]) == 4:
-        print('\nDefinir paises para calcular la ruta minima...')
-        countryA = input('Pais A: ')
-        countryB = input('Pais B: ')
-        min_path, total_dist, info_out = controller.minDistanceBetweenCapitals(cont, countryA, countryB)
-        print('\nRuta minima entre',countryA,'y',countryB)
-        for path_ in lt.iterator(min_path):
-            print(info_out[path_['vertexA']]['name'],'-->',info_out[path_['vertexB']]['name'],'dist [km]:', path_['weight'])
-        print('Total distance [km] :', total_dist)
+#     elif int(inputs[0]) == 4:     # Req 3
+#         print('\nDefinir paises para calcular la ruta minima...')
+#         countryA = input('Pais A: ')
+#         countryB = input('Pais B: ')
+#         min_path, total_dist, info_out = controller.minDistanceBetweenCapitals(cont, countryA, countryB)
+#         print('\nRuta minima entre',countryA,'y',countryB)
+#         for path_ in lt.iterator(min_path):
+#             print(info_out[path_['vertexA']]['name'],'-->',info_out[path_['vertexB']]['name'],'dist [km]:', path_['weight'])
+#         print('Total distance [km] :', total_dist)
 
-    elif int(inputs[0]) == 6:
-        print('\nDefinir landing point para simular fallo...')
-        lp = input('Nombre del landing point (ciudad): ')
-        adj_edges, sort_dist, info_out = controller.LandingPointNN(cont, lp)
-        print('\nNumero de paises afectados :',len(sort_dist))
-        for i, country_ in enumerate(sort_dist):
-            print(i+1,'--',info_out[country_[0]]['name'],
-                '| dist [km]: ', country_[1])
-    
+#     elif int(inputs[0]) == 6:     # Req 5
+#         print('\nDefinir landing point para simular fallo...')
+#         lp = input('Nombre del landing point (ciudad): ')
+#         adj_edges, sort_dist, info_out = controller.LandingPointNN(cont, lp)
+#         print('\nNumero de paises afectados :',len(sort_dist))
+#         for i, country_ in enumerate(sort_dist):
+#             print(i+1,'--',info_out[country_[0]]['name'],
+#                 '| dist [km]: ', country_[1])
 
-    else:
-        sys.exit(0)
-sys.exit(0)
+#     elif int(inputs[0]) == 8:     # Req 7
+#         print('\nEspecificar IPs')
+#         IPA = input('IP1: ')
+#         cityA = ipapi.location(ip=IPA)['city']
+#         print(cityA)
+#         IPB = input('IP2: ')
+#         cityB = ipapi.location(ip=IPB)['city']
+#         print(cityB)
+
+#     else:
+#         sys.exit(0)
+# sys.exit(0)
 
 #------------- debbug --------------------------
 # Input 1
@@ -126,7 +135,7 @@ numvertex = controller.totalLPs(cont)
 numcountries = controller.totalCountries(cont)
 firstlp = controller.getFirstLandingPointInfo(cont)
 lastcountry = controller.getLastCountryInfo(cont)
-print('Numero de landing points (vertices): ' + str(numvertex))
+print('\nNumero de landing points (vertices): ' + str(numvertex))
 print('Numero de conexiones (arcos): ' + str(numedges))
 print('Numero de paises : ' + str(numcountries))
 print('1st Landing point id: ', firstlp['id'],
@@ -143,12 +152,16 @@ print('n-Country Info: ', lastcountry['country'], ' -- ',
 # out = controller.VertexInComponents(cont, lp1, lp2)
 
 # Input 3
-# maxdeg, mostconnected, _ =  controller.mostConnectedLandingPoint(cont)
-
+# maxdeg, mostconnected, info_out =  controller.mostConnectedLandingPoint(cont)
+# print('\nLanding point(s) mas conectado(s)')
+# for i, mostconn_ in enumerate(mostconnected):
+#     print(i+1,'--', 'landing point id :', mostconn_,
+#             '| nombre :', info_out[mostconn_]['name'],
+#             '| conexiones :', maxdeg)
 # Input 4
 # print('\nDefinir paises para calcular la ruta minima...')
-# countryA = input('Pais A: ')
-# countryB = input('Pais B: ')
+# countryA = 'Colombia'
+# countryB = 'Argentina'
 # min_path, total_dist, info_out = controller.minDistanceBetweenCapitals(cont, countryA, countryB)
 # print('\nRuta minima entre',countryA,'y',countryB)
 # for path_ in lt.iterator(min_path):
@@ -156,12 +169,22 @@ print('n-Country Info: ', lastcountry['country'], ' -- ',
 # print('Total distance [km] :', total_dist)
 
 # Input 5
-# lp = input('\nNombre del landing point (ciudad): ')
-# adj_edges, sort_dist, info_out = controller.LandingPointNN(cont, lp)
+lp = 'Fortaleza'
+controller.simulateFailure(cont, lp)
 # print('\nNumero de paises afectados :',len(sort_dist))
 # for i, country_ in enumerate(sort_dist):
 #     print(i+1,'--',info_out[country_[0]]['name'].split(','),
 #           '| dist [km]: ', country_[1])
+
+# Input 8
+# print('\nEspecificar IPs')
+# IPA = '165.132.67.89'
+# cityA = ipapi.location(ip=IPA)['city']
+# print(cityA)
+# IPB = '8.8.8.8'
+# cityB = ipapi.location(ip=IPB)['city']
+# print(cityB)
+# min_path, total_dist, total_jumps, info_out = controller.minDistanceBetweenCities(cont, cityA, cityB)
     
 
 print('done')

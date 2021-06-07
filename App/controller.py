@@ -21,6 +21,7 @@
  """
 
 import config as cf
+import pandas as pd
 import model
 import csv
 import os
@@ -42,30 +43,43 @@ def init():
 # Funciones para la carga de datos
 
 def loadData(analyzer):
-    loadConnections(analyzer)
-    loadCountries(analyzer)
-    loadLandingPoints(analyzer)
-
-def loadConnections(analyzer):
-    connections_file = os.path.join('Data','connections.csv')
-    input_file = csv.DictReader(open(connections_file, encoding="utf-8"),
-                                delimiter=",")
-    for connection in input_file:
-        model.addConnections(analyzer, connection)
-
-def loadCountries(analyzer):
-    countries_file = os.path.join('Data','countries.csv')
-    input_file = csv.DictReader(open(countries_file, encoding="utf-8"),
-                                delimiter=",")
-    for country in input_file:
-        model.addCountries(analyzer, country)
+    country_lps = loadLandingPoints(analyzer)
+    minC_cables = loadConnections(analyzer)
+    loadCountries(analyzer, country_lps, minC_cables)
 
 def loadLandingPoints(analyzer):
     landing_points_file = os.path.join('Data','landing_points.csv')
     input_file = csv.DictReader(open(landing_points_file, encoding="utf-8"),
                                 delimiter=",")
+    country_lps = {}
     for lp in input_file:
         model.addLandingPoints(analyzer, lp)
+        lp_country = lp['name'].split(', ')[-1]
+        try:
+            country_lps[lp_country].append(lp['landing_point_id'])
+        except Exception as exp:
+            country_lps[lp_country] = list()
+            country_lps[lp_country].append(lp['landing_point_id'])
+    return country_lps 
+
+def loadConnections(analyzer):
+    connections_file = os.path.join('Data','connections.csv')
+    input_file = pd.read_csv(connections_file)
+    _,minC_cables = model.addConnections(analyzer, input_file)
+    return minC_cables
+
+def loadCountries(analyzer, country_lps, minC_cables):
+    countries_file = os.path.join('Data','countries.csv')
+    input_file = csv.DictReader(open(countries_file, encoding="utf-8"),
+                                delimiter=",")
+    for country in input_file:
+        try:
+            country_i_lps = country_lps[country['CountryName']]
+            model.addCountries(analyzer, country, country_i_lps, minC_cables)
+        except:
+            print(country['CountryName'],'ot found in landing points...')
+            continue
+
 
 # Funciones de ordenamiento
 
@@ -95,6 +109,18 @@ def minDistanceBetweenCapitals(analyzer, countryA, countryB):
     min_path, total_dist, info_out = model.minDistanceBetweenCapitals(analyzer, countryA, countryB)
     return min_path, total_dist, info_out
 
+def minDistanceBetweenCities(analyzer, cityA, cityB):
+    '''
+    Calcula la distancia minima entre las capitales de dos paises dados
+    '''
+    min_path, total_dist, total_jumps, info_out = model.minDistanceBetweenCities(analyzer, cityA, cityB)
+    return min_path, total_dist, total_jumps, info_out
+
+def simulateFailure(analyzer, lp_name):
+    '''
+    Calcula la lista de paises afectados
+    '''
+    model.simulateFailure(analyzer, lp_name)
 
 def LandingPointNN(analyzer, lp_name):
     '''
