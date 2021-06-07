@@ -26,6 +26,9 @@ import model
 import csv
 import os
 
+import plotly.graph_objects as go
+import pandas as pd
+
 """
 El controlador se encarga de mediar entre la vista y el modelo.
 """
@@ -80,6 +83,12 @@ def loadCountries(analyzer, country_lps, minC_cables):
             print(country['CountryName'],'ot found in landing points...')
             continue
 
+def plotGraph():
+    connections_file = os.path.join('Data','connections.csv')
+    input_file = pd.read_csv(connections_file)
+    fig = go.Figure()
+    fi
+    pass
 
 # Funciones de ordenamiento
 
@@ -137,6 +146,11 @@ def infraRed(analyzer):
     largeConnection=model.largeConnection(analyzer,prime)
     shortConnection=model.shortConnection(analyzer)
     return totalNodes,minRoute,largeConnection,shortConnection
+
+
+def maxBandWidth(analyzer, country, cable):
+
+    pass
 
 
 def totalLPs(analyzer):
